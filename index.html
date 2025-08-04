@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Manitoba Hydro: Калькулятор газа и электричества</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    h2 { margin-top: 0; }
+    .tab-btns button {
+      margin-right: 10px;
+      padding: 10px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .tab { display: none; }
+    .active { display: block; }
+    label { display: block; margin: 5px 0; }
+    input { width: 100px; padding: 4px; margin-left: 5px; }
+    pre { background: #f4f4f4; padding: 10px; }
+  </style>
+</head>
+<body>
+
+  <h1>💡 Manitoba Hydro калькулятор</h1>
+
+  <div class="tab-btns">
+    <button onclick="showTab('electric')">⚡ Электричество</button>
+    <button onclick="showTab('gas')">🔥 Газ</button>
+  </div>
+
+  <!-- Электричество -->
+  <div id="electric" class="tab active">
+    <h2>⚡ Расчёт электроэнергии</h2>
+    <label>Начальные показания: <input id="el_start" type="number"></label>
+    <label>Конечные показания: <input id="el_end" type="number"></label><br>
+    <button onclick="calcElectric()">Рассчитать</button>
+    <pre id="el_result"></pre>
+  </div>
+
+  <!-- Газ -->
+  <div id="gas" class="tab">
+    <h2>🔥 Расчёт стоимости газа</h2>
+    <label>Показания в начале: <input id="gas_start" type="number"></label>
+    <label>Показания в конце: <input id="gas_end" type="number"></label><br>
+    <button onclick="calcGas()">Рассчитать</button>
+    <pre id="gas_result"></pre>
+  </div>
+
+  <script>
+    function showTab(id) {
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    function calcElectric() {
+      const start = parseFloat(document.getElementById('el_start').value);
+      const end = parseFloat(document.getElementById('el_end').value);
+      const usageUnits = end - start;
+      const kWh = usageUnits * 10;
+      const rate = 0.09587;
+      const base = 9.46;
+
+      const energy = kWh * rate;
+      const subtotal = energy + base;
+
+      const cityTax = subtotal * 0.025;
+      const provTax = subtotal * 0.07;
+      const gst = subtotal * 0.05;
+      const gstOnCity = cityTax * 0.05;
+
+      const total = subtotal + cityTax + provTax + gst + gstOnCity;
+
+      document.getElementById('el_result').innerText = `
+Потребление: ${kWh.toFixed(0)} кВт·ч
+Стоимость энергии: $${energy.toFixed(2)}
+Базовая плата: $${base.toFixed(2)}
+Subtotal: $${subtotal.toFixed(2)}
+
+Налоги:
+- City tax (2.5%): $${cityTax.toFixed(2)}
+- Provincial tax (7%): $${provTax.toFixed(2)}
+- GST (5%): $${gst.toFixed(2)}
+- GST на city tax: $${gstOnCity.toFixed(2)}
+
+Итого к оплате: $${total.toFixed(2)}
+`;
+    }
+
+    function calcGas() {
+      const start = parseFloat(document.getElementById('gas_start').value);
+      const end = parseFloat(document.getElementById('gas_end').value);
+      const volume = end - start;
+
+      const pressureAdj = 0.98780;
+      const convFactor = 2.832784;
+      const gasCommodity = 0.09610;
+      const delivery = 0.13650;
+      const baseFee = 14.75;
+
+      const scm = volume * pressureAdj * convFactor;
+      const commodityCost = scm * gasCommodity;
+      const deliveryCost = scm * delivery;
+      const subtotal = commodityCost + deliveryCost + baseFee;
+
+      const cityTax = subtotal * 0.025;
+      const provTax = subtotal * 0.014;
+      const gst = subtotal * 0.05;
+      const gstOnCity = cityTax * 0.05;
+
+      const total = subtotal + cityTax + provTax + gst + gstOnCity;
+
+      document.getElementById('gas_result').innerText = `
+Объем (по счётчику): ${volume} м³
+Стандартизированный объем: ${scm.toFixed(3)} м³
+
+- Gas Commodity: $${commodityCost.toFixed(2)}
+- Delivery: $${deliveryCost.toFixed(2)}
+- Base Fee: $${baseFee.toFixed(2)}
+Subtotal: $${subtotal.toFixed(2)}
+
+Налоги:
+- City Tax (2.5%): $${cityTax.toFixed(2)}
+- Prov Tax (1.4%): $${provTax.toFixed(2)}
+- GST (5%): $${gst.toFixed(2)}
+- GST на City Tax: $${gstOnCity.toFixed(2)}
+
+Итого к оплате: $${total.toFixed(2)}
+`;
+    }
+  </script>
+</body>
+</html>
