@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Hydro Калькулятор</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Manitoba_Hydro_logo.svg/512px-Manitoba_Hydro_logo.svg.png"/>
+<style>
+/* (Стили оставлены без изменений — те же, что ты дал ранее, включая .total-box) */
+:root {
+  --bg-light: #f8f9fa;
+  --bg-dark: #111;
+  --text-light: #fff;
+  --text-dark: #fff;
+  --accent: #007aff;
+  --font-main: 'Inter', sans-serif;
+}
+body {
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.85), 0 0 10px rgba(0,0,0,0.3);
+  min-height: 100vh;
+  background-attachment: fixed;
+  margin: 0;
+  font-family: var(--font-main);
+  background: url('https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1024&q=80') center/cover no-repeat;
+  color: var(--text-light);
+  padding: 20px;
+  transition: background 0.3s, color 0.3s;
+}
+.container {
+  max-width: 480px;
+  margin: 0 auto;
+}
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.lang-toggle {
+  background: #fff !important;
+  color: #000 !important;
+  border-radius: 9999px;
+  padding: 8px 12px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  border: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: bold;
+  cursor: pointer;
+}
+h1 {
+  font-size: 1.5rem;
+  margin: 0;
+}
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.tabs button {
+  flex: 1;
+  padding: 10px;
+  background: #eee;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tabs button.active {
+  background: var(--accent);
+  color: #fff;
+}
+.tab-content {
+  display: none;
+}
+.tab-content.active {
+  display: block;
+}
+label {
+  display: block;
+  margin: 10px 0 4px;
+}
+input[type='number'] {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+button.calculate {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+pre {
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  white-space: pre-wrap;
+}
+body::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: -1;
+}
+
+.total-box {
+  margin-top: 12px;
+  background: rgba(30, 30, 30, 0.85);
+  border-radius: 12px;
+  padding: 12px 20px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #fff;
+  text-align: center;
+}
+
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<h1 id="main-title">Hydro калькулятор</h1>
+<button class="lang-toggle" id="langBtn" onclick="toggleLang()">EN</button>
+</header>
+<div class="tabs">
+<button class="tab-btn active" id="elTab" onclick="showTab('electric')">⚡️ Електроенергія</button>
+<button class="tab-btn" id="gasTab" onclick="showTab('gas')">🔥 Газ</button>
+</div>
+<div class="tab-content active" id="electric">
+<label for="el_start" id="el_start_lbl">Початкові показники:</label>
+<input id="el_start" type="number"/>
+<label for="el_end" id="el_end_lbl">Кінцеві показники:</label>
+<input id="el_end" type="number"/>
+<button class="calculate" id="el_btn" onclick="calcElectric()">Розрахувати</button>
+<pre id="el_result"></pre>
+</div>
+<div class="tab-content" id="gas">
+<label for="gas_start" id="gas_start_lbl">Початкові показники:</label>
+<input id="gas_start" type="number"/>
+<label for="gas_end" id="gas_end_lbl">Кінцеві показники:</label>
+<input id="gas_end" type="number"/>
+<button class="calculate" id="gas_btn" onclick="calcGas()">Розрахувати</button>
+<pre id="gas_result"></pre>
+</div>
+<div class="total-box" id="finalTotal">🧾 <span id="finalAmount">—</span></div>
+</div>
+<script>
+let currentLang = 'ua';
+const translations = {
+  ua: {
+    title: 'Hydro калькулятор',
+    elTab: '⚡️ Електроенергія',
+    gasTab: '🔥 Газ',
+    el_start_lbl: 'Початкові показники:',
+    el_end_lbl: 'Кінцеві показники:',
+    gas_start_lbl: 'Початкові показники:',
+    gas_end_lbl: 'Кінцеві показники:',
+    el_btn: 'Розрахувати',
+    gas_btn: 'Розрахувати',
+    langBtn: 'EN'
+  },
+  en: {
+    title: 'Hydro Calculator',
+    elTab: '⚡️ Electricity',
+    gasTab: '🔥 Gas',
+    el_start_lbl: 'Start reading:',
+    el_end_lbl: 'End reading:',
+    gas_start_lbl: 'Start reading:',
+    gas_end_lbl: 'End reading:',
+    el_btn: 'Calculate',
+    gas_btn: 'Calculate',
+    langBtn: 'UA'
+  }
+};
+function toggleLang() {
+  currentLang = currentLang === 'ua' ? 'en' : 'ua';
+  const t = translations[currentLang];
+  document.getElementById('main-title').innerText = t.title;
+  document.getElementById('elTab').innerText = t.elTab;
+  document.getElementById('gasTab').innerText = t.gasTab;
+  document.getElementById('el_start_lbl').innerText = t.el_start_lbl;
+  document.getElementById('el_end_lbl').innerText = t.el_end_lbl;
+  document.getElementById('gas_start_lbl').innerText = t.gas_start_lbl;
+  document.getElementById('gas_end_lbl').innerText = t.gas_end_lbl;
+  document.getElementById('el_btn').innerText = t.el_btn;
+  document.getElementById('gas_btn').innerText = t.gas_btn;
+  document.getElementById('langBtn').innerText = t.langBtn;
+}
+function showTab(id) {
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+function setTotal(val) {
+  document.getElementById('finalAmount').innerText = `$${val.toFixed(2)}`;
+}
+function calcElectric() {
+  const start = parseFloat(document.getElementById('el_start').value);
+  const end = parseFloat(document.getElementById('el_end').value);
+  const usageUnits = end - start;
+  const kWh = usageUnits * 10;
+  const rate = 0.09587;
+  const base = 9.46;
+  const energy = kWh * rate;
+  const subtotal = energy + base;
+  const cityTax = subtotal * 0.025;
+  const provTax = subtotal * 0.07;
+  const gst = subtotal * 0.05;
+  const gstOnCity = cityTax * 0.05;
+  const total = subtotal + cityTax + provTax + gst + gstOnCity;
+  document.getElementById('el_result').innerText = `
+${currentLang === 'ua' ? `Споживання: ${kWh.toFixed(0)} кВт·год` : `Usage: ${kWh.toFixed(0)} kWh`}
+${currentLang === 'ua' ? `Енергія: $${energy.toFixed(2)}` : `Energy: $${energy.toFixed(2)}`}
+${currentLang === 'ua' ? `Базова плата: $${base.toFixed(2)}` : `Base fee: $${base.toFixed(2)}`}
+Subtotal: $${subtotal.toFixed(2)}
+Taxes:
+- City: $${cityTax.toFixed(2)}
+- Provincial: $${provTax.toFixed(2)}
+- GST: $${gst.toFixed(2)}
+- GST on City: $${gstOnCity.toFixed(2)}
+${currentLang === 'ua' ? `До сплати: $${total.toFixed(2)}` : `Total due: $${total.toFixed(2)}`}
+`;
+  setTotal(total);
+}
+function calcGas() {
+  const start = parseFloat(document.getElementById('gas_start').value);
+  const end = parseFloat(document.getElementById('gas_end').value);
+  const volume = end - start;
+  const pressureAdj = 0.9878;
+  const convFactor = 2.832784;
+  const gasCommodity = 0.0961;
+  const delivery = 0.1365;
+  const baseFee = 14.75;
+  const scm = volume * pressureAdj * convFactor;
+  const commodityCost = scm * gasCommodity;
+  const deliveryCost = scm * delivery;
+  const subtotal = commodityCost + deliveryCost + baseFee;
+  const cityTax = subtotal * 0.025;
+  const provTax = subtotal * 0.014;
+  const gst = subtotal * 0.05;
+  const gstOnCity = cityTax * 0.05;
+  const total = subtotal + cityTax + provTax + gst + gstOnCity;
+  document.getElementById('gas_result').innerText = `
+${currentLang === 'ua' ? `Обʼєм: ${volume} м³` : `Volume: ${volume} m³`}
+${currentLang === 'ua' ? `Стандартизований обʼєм: ${scm.toFixed(3)} м³` : `Standardized volume: ${scm.toFixed(3)} m³`}
+- ${currentLang === 'ua' ? `Товарний газ` : `Commodity gas`}: $${commodityCost.toFixed(2)}
+- ${currentLang === 'ua' ? `Доставка` : `Delivery`}: $${deliveryCost.toFixed(2)}
+- ${currentLang === 'ua' ? `Базова плата` : `Base fee`}: $${baseFee.toFixed(2)}
+Subtotal: $${subtotal.toFixed(2)}
+Taxes:
+- City: $${cityTax.toFixed(2)}
+- Provincial: $${provTax.toFixed(2)}
+- GST: $${gst.toFixed(2)}
+- GST on City: $${gstOnCity.toFixed(2)}
+${currentLang === 'ua' ? `До сплати: $${total.toFixed(2)}` : `Total due: $${total.toFixed(2)}`}
+`;
+  setTotal(total);
+}
+window.addEventListener('DOMContentLoaded', () => {
+  const userLang = navigator.language || navigator.userLanguage;
+  const ruRegex = /^ru(-|$)/i;
+  const langToggle = document.querySelector('.lang-toggle');
+  if (ruRegex.test(userLang)) {
+    localStorage.setItem('lang', 'ua');
+  } else {
+    localStorage.setItem('lang', 'en');
+  }
+  if (langToggle && !document.body.classList.contains('lang-set')) {
+    const lang = localStorage.getItem('lang') || 'ua';
+    toggleLang(lang === 'en' ? 'ua' : 'en');
+    document.body.classList.add('lang-set');
+  }
+});
+</script>
+</body>
+</html>
